@@ -142,6 +142,8 @@
     <ClCompile Include="Source.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="CImg.h" />
+    <ClInclude Include="FreeImage.h" />
     <ClInclude Include="GUI.h" />
     <ClInclude Include="GUIMyFrame1.h" />
   </ItemGroup>

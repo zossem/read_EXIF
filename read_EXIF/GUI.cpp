@@ -35,9 +35,12 @@ MyFrame1::MyFrame1( wxWindow* parent, wxWindowID id, const wxString& title, cons
 	m_checkBox_animation = new wxCheckBox( this, wxID_ANY, wxT("Animacja"), wxDefaultPosition, wxDefaultSize, 0 );
 	bSizer3->Add( m_checkBox_animation, 0, wxALL, 5 );
 
-	m_notebook = new wxNotebook( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, 0 );
+	m_progres_bar = new wxGauge( this, wxID_ANY, 100, wxDefaultPosition, wxDefaultSize, wxGA_HORIZONTAL );
+	m_progres_bar->SetValue( 0 );
+	bSizer3->Add( m_progres_bar, 0, wxRESERVE_SPACE_EVEN_IF_HIDDEN, 5 );
 
-	bSizer3->Add( m_notebook, 1, wxEXPAND | wxALL, 5 );
+	m_textCtrl1 = new wxTextCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	bSizer3->Add( m_textCtrl1, 0, wxALL|wxEXPAND, 5 );
 
 
 	bSizer2->Add( bSizer3, 1, wxEXPAND, 5 );
@@ -59,6 +62,8 @@ MyFrame1::MyFrame1( wxWindow* parent, wxWindowID id, const wxString& title, cons
 	m_button_blur->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( MyFrame1::bitton_blur_click ), NULL, this );
 	m_button_erode->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( MyFrame1::button_erode_click ), NULL, this );
 	m_checkBox_animation->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( MyFrame1::checko_box_check ), NULL, this );
+	m_panel1->Connect( wxEVT_PAINT, wxPaintEventHandler( MyFrame1::panel_OnPaint ), NULL, this );
+	m_panel1->Connect( wxEVT_SIZE, wxSizeEventHandler( MyFrame1::panel_OnSize ), NULL, this );
 	m_panel1->Connect( wxEVT_UPDATE_UI, wxUpdateUIEventHandler( MyFrame1::panel_update ), NULL, this );
 }
 
@@ -69,6 +74,8 @@ MyFrame1::~MyFrame1()
 	m_button_blur->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( MyFrame1::bitton_blur_click ), NULL, this );
 	m_button_erode->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( MyFrame1::button_erode_click ), NULL, this );
 	m_checkBox_animation->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( MyFrame1::checko_box_check ), NULL, this );
+	m_panel1->Disconnect( wxEVT_PAINT, wxPaintEventHandler( MyFrame1::panel_OnPaint ), NULL, this );
+	m_panel1->Disconnect( wxEVT_SIZE, wxSizeEventHandler( MyFrame1::panel_OnSize ), NULL, this );
 	m_panel1->Disconnect( wxEVT_UPDATE_UI, wxUpdateUIEventHandler( MyFrame1::panel_update ), NULL, this );
 
 }

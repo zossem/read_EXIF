@@ -19,7 +19,8 @@
 #include <wx/colour.h>
 #include <wx/settings.h>
 #include <wx/checkbox.h>
-#include <wx/notebook.h>
+#include <wx/gauge.h>
+#include <wx/textctrl.h>
 #include <wx/sizer.h>
 #include <wx/panel.h>
 #include <wx/frame.h>
@@ -39,7 +40,8 @@ class MyFrame1 : public wxFrame
 		wxButton* m_button_blur;
 		wxButton* m_button_erode;
 		wxCheckBox* m_checkBox_animation;
-		wxNotebook* m_notebook;
+		wxGauge* m_progres_bar;
+		wxTextCtrl* m_textCtrl1;
 		wxPanel* m_panel1;
 
 		// Virtual event handlers, override them in your derived class
@@ -47,6 +49,8 @@ class MyFrame1 : public wxFrame
 		virtual void bitton_blur_click( wxCommandEvent& event ) { event.Skip(); }
 		virtual void button_erode_click( wxCommandEvent& event ) { event.Skip(); }
 		virtual void checko_box_check( wxCommandEvent& event ) { event.Skip(); }
+		virtual void panel_OnPaint( wxPaintEvent& event ) { event.Skip(); }
+		virtual void panel_OnSize( wxSizeEvent& event ) { event.Skip(); }
 		virtual void panel_update( wxUpdateUIEvent& event ) { event.Skip(); }
 
 
