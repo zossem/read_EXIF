@@ -227,7 +227,8 @@ void GUIMyFrame1::Repaint()
 			tick_delay = (tick_delay + 1) % 9;
 			if (tick_delay == 8)
 				frame_index = (frame_index + 1) % 60;
-			RefreshRect(wxRect(1, 1, 1, 1), false); //Poprawia plynnosc
+			RefreshRect(wxRect(1, 1, 1, 1), false); //refresh 1x1 pixel area starting at coordinates (1, 1) without erasing the background. 
+													//useful for fine-grained updates when only a specific part of the window needs to be redrawn
 
 			return;
 		}
