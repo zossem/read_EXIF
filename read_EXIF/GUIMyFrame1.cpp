@@ -41,24 +41,30 @@ ReadExif(openFileDialog.GetPath());
 
 void GUIMyFrame1::bitton_blur_click( wxCommandEvent& event )
 {
-if (!m_isBlur) {
-Censore();
-m_isBlur = !m_isBlur;
+	m_isBlur = !m_isBlur;
+
+	Repaint();
 }
 
-//panel_OnSize(wxSizeEvent());
+void GUIMyFrame1::Censore()
+{
+	cimg_library::CImg<unsigned char> copy_cImg = wxImageToCImg(Img_Copy);
 
+	int x_start = (460.0/800.0)* Img_Copy.GetWidth();
+	int y_start = (17.0/533.0) * Img_Copy.GetHeight();
+	int width = (109.0 / 800.0) * Img_Copy.GetWidth();
+	int high = (60.0 / 533.0) * Img_Copy.GetHeight();
+
+	cimg_library::CImg<unsigned char> censored_head = copy_cImg.get_crop(x_start, y_start, x_start + width, y_start + high).blur(10);
+	copy_cImg.draw_image(x_start, y_start, censored_head);
+	Img_Copy = CImgTowxImage(copy_cImg);
 }
 
 void GUIMyFrame1::button_erode_click( wxCommandEvent& event )
 {
-	if (!m_isEroded) {
-		Erode();
-		m_isEroded = !m_isEroded;
-	}
-
-	//panel_OnSize(wxSizeEvent());
-
+	m_isEroded = !m_isEroded;
+	
+	Repaint();
 }
 
 void GUIMyFrame1::checko_box_check( wxCommandEvent& event )
@@ -132,13 +138,17 @@ void GUIMyFrame1::panel_OnPaint( wxPaintEvent& event )
 
 void GUIMyFrame1::panel_OnSize( wxSizeEvent& event )
 {
-if (Img_Org.IsOk()) {
-int borderSize = 5; // default border size
-int newWidth = this->GetClientSize().GetWidth() - m_panel1->GetPosition().x - borderSize;
-int newHeight = this->GetClientSize().GetHeight() - m_panel1->GetPosition().y - borderSize;
-Img_Copy = Img_Org.Scale(newWidth, newHeight);
+	Repaint();
 }
 
+void GUIMyFrame1::Size()
+{
+	if (Img_Org.IsOk()) {
+		int borderSize = 5; // default border size
+		int newWidth = this->GetClientSize().GetWidth() - m_panel1->GetPosition().x - borderSize;
+		int newHeight = this->GetClientSize().GetHeight() - m_panel1->GetPosition().y - borderSize;
+		Img_Copy = Img_Org.Scale(newWidth, newHeight);
+	}
 }
 
 void GUIMyFrame1::panel_update( wxUpdateUIEvent& event )
@@ -147,26 +157,21 @@ Repaint();
 }
 
 
-void GUIMyFrame1::Censore()
-{
-	auto img = wxImageToCImg(Img_Org);
-
-	int x0 = 450, y0 = 10, dx = 125, dy = 80;
-
-	auto cropped = img.get_crop(x0, y0, x0 + dx, y0 + dy).blur(5);
-	img.draw_image(x0, y0, cropped);
-	Img_Org = CImgTowxImage(img);
-}
 
 void GUIMyFrame1::Erode()
 {
-	auto img = wxImageToCImg(Img_Org);
-	img.erode(5);
-	Img_Org = CImgTowxImage(img);
+	cimg_library::CImg<unsigned char> temp_cImg = wxImageToCImg(Img_Copy);
+	temp_cImg.erode(4);
+	Img_Copy = CImgTowxImage(temp_cImg);
 }
 
 
-
+void GUIMyFrame1::EnableControls()
+{
+	m_checkBox_animation->Enable();
+	m_button_blur->Enable();
+	m_button_erode->Enable();
+}
 
 
 cimg_library::CImg<unsigned char> GUIMyFrame1::wxImageToCImg(wxImage image)
@@ -186,17 +191,6 @@ cimg_library::CImg<unsigned char> GUIMyFrame1::wxImageToCImg(wxImage image)
 
 	return c_image;
 }
-
-void GUIMyFrame1::EnableControls()
-{
-	m_button_erode->Enable();
-	m_button_blur->Enable();
-	m_checkBox_animation->Enable();
-}
-
-
-
-
 
 wxImage GUIMyFrame1::CImgTowxImage(cimg_library::CImg<unsigned char> image)
 {
@@ -225,15 +219,29 @@ void GUIMyFrame1::Repaint()
 
 	if (Img_Copy.IsOk())
 	{
+		Size();
+
 		if (m_isAnimation)
 		{
 			dc.DrawBitmap(m_isAnimationFrames[frame_index], 0, 0);
-			tick_delay = (tick_delay + 1) % 8;
-			if (tick_delay >= 7) frame_index = (frame_index + 1) % 60;
-			RefreshRect(wxRect(1, 1, 1, 1), false);
+			tick_delay = (tick_delay + 1) % 9;
+			if (tick_delay == 8)
+				frame_index = (frame_index + 1) % 60;
+			RefreshRect(wxRect(1, 1, 1, 1), false); //Poprawia plynnosc
 
 			return;
 		}
+
+		if (m_isBlur)
+		{
+			Censore();
+		}
+
+		if (m_isEroded) 
+		{
+			Erode();
+		}
+
 
 		wxBitmap bitmap(Img_Copy);
 		dc.DrawBitmap(bitmap, 0, 0);

@@ -45,6 +45,7 @@ private:
 
 
 	wxSize m_mini_size;
+	void Size();
 	void Censore();
 	void Erode();
 	void Animate();
