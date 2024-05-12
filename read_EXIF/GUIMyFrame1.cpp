@@ -4,24 +4,53 @@ GUIMyFrame1::GUIMyFrame1( wxWindow* parent )
 :
 MyFrame1( parent )
 {
-
+	wxImage::AddHandler(new wxJPEGHandler);           // Dodajemy handlery do formatow
 }
 
 void GUIMyFrame1::button_load_click( wxCommandEvent& event )
 {
-wxFileDialog saveFileDialog(this, "Choose a file", "", "", "Image Files (*.jpg)|*.jpg");
-if (saveFileDialog.ShowModal() == wxID_CANCEL) return;
+	wxFileDialog openFileDialog(this, _("Open JPEG file"), "", "", "JPEG files (*.jpg)|*.jpg", wxFD_OPEN | wxFD_FILE_MUST_EXIST);
+	if (openFileDialog.ShowModal() == wxID_CANCEL)
+		return;
 
-auto path = saveFileDialog.GetPath().ToStdString();
+	wxImage image;
+	{
+		if (!image.LoadFile(openFileDialog.GetPath()))
+		{
+			wxMessageBox(_("Nie uda\u0142o si\u0119 za\u0142adowa\u0107 obrazka"));
+			this->Destroy();
+			return;
+		}
+		else
+		{
+			Img_Org = image.Copy();
+			Img_Copy = Img_Org.Copy(); 
+		}
+	}
+	m_isEroded = false;
+	m_isBlur = false;
+	m_isAnimation = false;
+	m_checkBox_animation->SetValue(false);
+	EnableControls();
 
-ProcessImageInit(path);
+	ProcessExif(openFileDialog.GetPath());
+
 }
+
+
+void GUIMyFrame1::EnableControls()
+{
+	m_button_erode->Enable();
+	m_button_blur->Enable();
+	m_checkBox_animation->Enable();
+}
+
 
 void GUIMyFrame1::bitton_blur_click( wxCommandEvent& event )
 {
-if (!_censorship) {
+if (!m_isBlur) {
 Censore();
-_censorship = !_censorship;
+m_isBlur = !m_isBlur;
 }
 
 //panel_OnSize(wxSizeEvent());
@@ -29,11 +58,11 @@ _censorship = !_censorship;
 event.Skip();
 }
 
-void GUIMyFrame1::button_erode_click( wxCommandEvent& event )
+void GUIMyFrame1::buttonm_isEroded_click( wxCommandEvent& event )
 {
-if (!_erode) {
+if (!m_isEroded) {
 Erode();
-_erode = !_erode;
+m_isEroded = !m_isEroded;
 }
 
 //panel_OnSize(wxSizeEvent());
@@ -43,7 +72,7 @@ event.Skip();
 
 void GUIMyFrame1::checko_box_check( wxCommandEvent& event )
 {
-if (_animation = !_animation) {
+if (m_isAnimation = !m_isAnimation) {
 m_button_blur->Disable();
 m_button_erode->Disable();
 this->SetMinSize(this->GetSize());
@@ -83,28 +112,7 @@ Repaint(); event.Skip();
 }
 
 
-void GUIMyFrame1::ProcessImageInit(wxString path)
-{
-	auto stdStringPath = path.ToStdString();
-	auto charPath = path.data();
 
-	if (!Img_Org.LoadFile(path))
-	{
-		wxMessageBox(_("Nie udalo sie zaladowac obrazka"));
-		this->Destroy();
-		return;
-	}
-	Img_Copy = Img_Org.Copy();
-
-	_erode = _censorship = _animation = false;
-	m_checkBox_animation->SetValue(false);
-
-	EnableControls();
-
-	ProcessExif(charPath);
-
-	//panel_OnSize(wxSizeEvent());
-}
 
 wxImage GUIMyFrame1::CImgTowxImage(cimg_library::CImg<unsigned char> image)
 {
@@ -120,6 +128,8 @@ wxImage GUIMyFrame1::CImgTowxImage(cimg_library::CImg<unsigned char> image)
 
 	return img;
 }
+
+
 
 cimg_library::CImg<unsigned char> GUIMyFrame1::wxImageToCImg(wxImage image)
 {
@@ -149,9 +159,9 @@ void GUIMyFrame1::Repaint()
 
 	if (Img_Copy.IsOk())
 	{
-		if (_animation)
+		if (m_isAnimation)
 		{
-			dc.DrawBitmap(_animationFrames[frame_index], 0, 0);
+			dc.DrawBitmap(m_isAnimationFrames[frame_index], 0, 0);
 			tick_delay = (tick_delay + 1) % 8;
 			if (tick_delay >= 7) frame_index = (frame_index + 1) % 60;
 			RefreshRect(wxRect(1, 1, 1, 1), false);
@@ -164,37 +174,33 @@ void GUIMyFrame1::Repaint()
 	}
 }
 
-void GUIMyFrame1::EnableControls()
-{
-	m_button_erode->Enable();
-	m_button_blur->Enable();
-	m_checkBox_animation->Enable();
-}
+
 
 void GUIMyFrame1::ProcessExif(const char* path)
 {
-	FREE_IMAGE_FORMAT fif = FreeImage_GetFileType(path, 0);
-	FIBITMAP* dib = FreeImage_Load(fif, path);
+	FREE_IMAGE_FORMAT typ_of_bitmap = FreeImage_GetFileType(path, 0);
+	FIBITMAP* loaded_bitmap = FreeImage_Load(typ_of_bitmap, path);
 
-	unsigned int width = FreeImage_GetWidth(dib);
-	unsigned int height = FreeImage_GetHeight(dib);
+	unsigned int width = FreeImage_GetWidth(loaded_bitmap);
+	unsigned int height = FreeImage_GetHeight(loaded_bitmap);
 
 	m_textCtrl1->Clear();
-	m_textCtrl1->AppendText(std::string("Image size: ") + std::to_string(width) + "x" + std::to_string(height) + "\n\n");
+	m_textCtrl1->AppendText(std::string("Rozmiar obrazka: ") + std::to_string(width) + "*" + std::to_string(height) + "\n");
 
 	m_textCtrl1->AppendText("EXIF Info:\n");
-	if (int count = FreeImage_GetMetadataCount(FIMD_EXIF_MAIN, dib))
+	unsigned count;
+	if (count = FreeImage_GetMetadataCount(FIMD_EXIF_MAIN, loaded_bitmap)) 
 	{
-		DisplayExif(dib, FIMD_EXIF_MAIN);
+		DisplayExif(loaded_bitmap, FIMD_EXIF_MAIN);
 	}
 }
 
-void GUIMyFrame1::DisplayExif(FIBITMAP* dib, FREE_IMAGE_MDMODEL model)
+void GUIMyFrame1::DisplayExif(FIBITMAP* loaded_bitmap, FREE_IMAGE_MDMODEL model)
 {
 	FITAG* tag = NULL;
 	FIMETADATA* mdhandle = NULL;
 
-	mdhandle = FreeImage_FindFirstMetadata(model, dib, &tag);
+	mdhandle = FreeImage_FindFirstMetadata(model, loaded_bitmap, &tag);
 
 	if (mdhandle) {
 
@@ -250,7 +256,7 @@ void GUIMyFrame1::Animate()
 		tmp.mul(gauss);
 		auto frame = CImgTowxImage(tmp);
 
-		_animationFrames[59 - i] = wxBitmap(frame);
+		m_isAnimationFrames[59 - i] = wxBitmap(frame);
 	}
 
 	m_progres_bar->Hide();
