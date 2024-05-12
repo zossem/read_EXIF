@@ -39,7 +39,7 @@ MyFrame1::MyFrame1( wxWindow* parent, wxWindowID id, const wxString& title, cons
 	m_progres_bar->SetValue( 0 );
 	bSizer3->Add( m_progres_bar, 0, wxRESERVE_SPACE_EVEN_IF_HIDDEN, 5 );
 
-	m_textCtrl1 = new wxTextCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	m_textCtrl1 = new wxTextCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE );
 	m_textCtrl1->SetMinSize( wxSize( 200,400 ) );
 
 	bSizer3->Add( m_textCtrl1, 0, wxALL|wxEXPAND, 5 );

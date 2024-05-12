@@ -26,7 +26,7 @@ class GUIMyFrame1 : public MyFrame1
 		// Handlers for MyFrame1 events.
 		void button_load_click( wxCommandEvent& event );
 		void bitton_blur_click( wxCommandEvent& event );
-		void buttonm_isEroded_click( wxCommandEvent& event );
+		void button_erode_click( wxCommandEvent& event );
 		void checko_box_check( wxCommandEvent& event );
 		void panel_OnPaint( wxPaintEvent& event );
 		void panel_OnSize( wxSizeEvent& event );
@@ -42,14 +42,13 @@ private:
 	bool m_isBlur;
 	bool m_isAnimation;
 
-	
+
 
 	wxSize _minSize;
 	void Censore();
 	void Erode();
 	void Animate();
-	void ProcessExif(const char* path);
-	void DisplayExif(FIBITMAP* dib, FREE_IMAGE_MDMODEL model);
+	void ReadExif(const char* path);
 	cimg_library::CImg<unsigned char> wxImageToCImg(wxImage image);
 	wxImage CImgTowxImage(cimg_library::CImg<unsigned char> image);
 	void EnableControls();
@@ -60,6 +59,7 @@ public:
 	wxImage Img_Org;
 	wxImage Img_Copy;
 	wxBitmap m_isAnimationFrames[60];
+
 
 
 

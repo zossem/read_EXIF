@@ -17,10 +17,6 @@ bool MyApp::OnInit()
     SetProcessDPIAware();
     GUIMyFrame1* mainFrame = new GUIMyFrame1(NULL);
 
-    
-    
-    
-
     mainFrame->Show(true);
     SetTopWindow(mainFrame);
 
