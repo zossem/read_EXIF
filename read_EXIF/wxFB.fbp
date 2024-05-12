@@ -51,7 +51,7 @@
       <property name="size">758,532</property>
       <property name="style">wxDEFAULT_FRAME_STYLE</property>
       <property name="subclass">; ; forward_declare</property>
-      <property name="title"></property>
+      <property name="title">lab 08 GFK</property>
       <property name="tooltip"></property>
       <property name="two_step_creation">0</property>
       <property name="window_extra_style"></property>
@@ -476,7 +476,7 @@
                     <property name="maxlength"></property>
                     <property name="min_size"></property>
                     <property name="minimize_button">0</property>
-                    <property name="minimum_size">-1,-1</property>
+                    <property name="minimum_size">200,400</property>
                     <property name="moveable">1</property>
                     <property name="name">m_textCtrl1</property>
                     <property name="pane_border">1</property>

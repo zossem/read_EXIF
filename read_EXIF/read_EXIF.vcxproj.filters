@@ -35,8 +35,5 @@
     <ClInclude Include="CImg.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="FreeImage.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
   </ItemGroup>
 </Project>
