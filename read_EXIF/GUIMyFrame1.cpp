@@ -5,6 +5,8 @@ GUIMyFrame1::GUIMyFrame1( wxWindow* parent )
 MyFrame1( parent )
 {
 	wxImage::AddHandler(new wxJPEGHandler);           // Dodajemy handlery do formatow
+	m_progres_bar->SetRange(60);
+	m_progres_bar->Hide();
 }
 
 void GUIMyFrame1::button_load_click( wxCommandEvent& event )
@@ -46,7 +48,6 @@ m_isBlur = !m_isBlur;
 
 //panel_OnSize(wxSizeEvent());
 
-event.Skip();
 }
 
 void GUIMyFrame1::button_erode_click( wxCommandEvent& event )
@@ -58,31 +59,75 @@ void GUIMyFrame1::button_erode_click( wxCommandEvent& event )
 
 	//panel_OnSize(wxSizeEvent());
 
-	event.Skip();
 }
 
 void GUIMyFrame1::checko_box_check( wxCommandEvent& event )
 {
-if (m_isAnimation = !m_isAnimation) {
-m_button_blur->Disable();
-m_button_erode->Disable();
-this->SetMinSize(this->GetSize());
-this->SetMaxSize(this->GetSize());
+	m_isAnimation = !m_isAnimation;
+	if (m_isAnimation) 
+	{
+		m_button_blur->Disable();
+		m_button_erode->Disable();
 
-Animate();
-}
-else {
-this->SetMaxSize(wxSize(-1, -1));
-this->SetMinSize(_minSize);
-EnableControls();
+		this->SetMinSize(this->GetSize());
+		this->SetMaxSize(this->GetSize());
+
+		Animate();
+	}
+	else 
+	{
+		this->SetMaxSize(wxSize(-1, -1));
+		this->SetMinSize(m_mini_size);
+
+		EnableControls();
+	}
 }
 
-event.Skip();
+void GUIMyFrame1::Animate()
+{
+	m_progres_bar->Show();
+
+	const int width = Img_Copy.GetSize().x;
+	const int height = Img_Copy.GetSize().y;	
+	const int depth = 1;
+
+	float sigma = 100.f;
+
+	cimg_library::CImg<unsigned char> copy_cImg = wxImageToCImg(Img_Copy);
+
+	float color[3] = { 1.f, 1.f, 1.f };
+
+	for (int i = 0; i < 60; i++)
+	{
+		m_progres_bar->SetValue(i);
+
+		cimg_library::CImg<float> gaussian_1(width, height, depth, 3);
+		gaussian_1.draw_gaussian(	(width / 2.f) + (width * 0.35f) * cos(i * M_PI / 60.f),
+									(height / 2.f) - (height * 0.3f) * sin(i * M_PI / 60.f),
+									sigma,	color);
+
+		cimg_library::CImg<float> gaussian_2(width, height, depth, 3);
+		gaussian_2.draw_gaussian((width / 2.f) + (width * 0.35f) * cos((i + 60.f) * M_PI / 60.f),
+								(height / 2.f) - (height * 0.3f) * sin((i + 60.f) * M_PI / 60.f),
+								sigma,	color);
+
+		gaussian_1 += gaussian_2;
+
+		cimg_library::CImg<float> temp_cImg = copy_cImg;
+		temp_cImg.mul(gaussian_1);
+
+		wxImage frame = CImgTowxImage(temp_cImg);
+
+		m_isAnimationFrames[i] = wxBitmap(frame);
+	}
+
+	m_progres_bar->Hide();
 }
+
 
 void GUIMyFrame1::panel_OnPaint( wxPaintEvent& event )
 {
-Repaint(); event.Skip();
+	Repaint(); 
 }
 
 void GUIMyFrame1::panel_OnSize( wxSizeEvent& event )
@@ -94,12 +139,11 @@ int newHeight = this->GetClientSize().GetHeight() - m_panel1->GetPosition().y - 
 Img_Copy = Img_Org.Scale(newWidth, newHeight);
 }
 
-event.Skip();
 }
 
 void GUIMyFrame1::panel_update( wxUpdateUIEvent& event )
 {
-Repaint(); event.Skip();
+Repaint(); 
 }
 
 
@@ -121,68 +165,26 @@ void GUIMyFrame1::Erode()
 	Img_Org = CImgTowxImage(img);
 }
 
-void GUIMyFrame1::Animate()
-{
-	m_progres_bar->Show();
-
-	const int height = Img_Copy.GetSize().y;
-	const int width = Img_Copy.GetSize().x;
-
-	auto copy = wxImageToCImg(Img_Copy);
-
-	float color[3] = { 1, 1, 1 };
-
-	for (int i = 0; i < 60; i++)
-	{
-		m_progres_bar->SetValue(i);
-
-		auto gauss = cimg_library::CImg<float>(width, height, 1, 3);
-		auto gauss2 = cimg_library::CImg<float>(width, height, 1, 3);
-
-		gauss.draw_gaussian(
-			(width / 2.) + (width * 0.3) * cos(i * M_PI / 60.f),
-			(height / 2.) + (height * 0.3) * sin(i * M_PI / 60.f),
-			120.0f,
-			color,
-			1.0f);
-
-		gauss2.draw_gaussian(
-			(width / 2.) + (width * 0.3) * cos((i + 60.f) * M_PI / 60.f),
-			(height / 2.) + (height * 0.3) * sin((i + 60.f) * M_PI / 60.f),
-			120.0f,
-			color,
-			1.0f);
-
-		gauss += gauss2;
-
-		cimg_library::CImg<float> tmp = copy;
-		tmp.mul(gauss);
-		auto frame = CImgTowxImage(tmp);
-
-		m_isAnimationFrames[59 - i] = wxBitmap(frame);
-	}
-
-	m_progres_bar->Hide();
-}
 
 
 
 
 cimg_library::CImg<unsigned char> GUIMyFrame1::wxImageToCImg(wxImage image)
 {
-	cimg_library::CImg<unsigned char> img(image.GetWidth(), image.GetHeight(), 1, 3);
+	cimg_library::CImg<unsigned char> c_image(image.GetWidth(), image.GetHeight(), 1, 3); // initialized CImage (width, high, deep- 3'ed dimetion, how many chanels for one pixel) 
 
 	for (size_t x = 0; x < image.GetWidth(); x++)
 	{
 		for (size_t y = 0; y < image.GetHeight(); y++)
 		{
-			img(x, y, 0, 0) = image.GetRed(x, y);
-			img(x, y, 0, 1) = image.GetGreen(x, y);
-			img(x, y, 0, 2) = image.GetBlue(x, y);
+			size_t z = 0;
+			c_image(x, y, z, 0) = image.GetRed(x, y);
+			c_image(x, y, z, 1) = image.GetGreen(x, y);
+			c_image(x, y, z, 2) = image.GetBlue(x, y);
 		}
 	}
 
-	return img;
+	return c_image;
 }
 
 void GUIMyFrame1::EnableControls()
@@ -198,17 +200,18 @@ void GUIMyFrame1::EnableControls()
 
 wxImage GUIMyFrame1::CImgTowxImage(cimg_library::CImg<unsigned char> image)
 {
-	wxImage img(image.width(), image.height());
+	wxImage temp_image(image.width(), image.height());
 
-	for (size_t x = 0; x < img.GetWidth(); x++)
+	for (size_t x = 0; x < temp_image.GetWidth(); x++)
 	{
-		for (size_t y = 0; y < img.GetHeight(); y++)
+		for (size_t y = 0; y < temp_image.GetHeight(); y++)
 		{
-			img.SetRGB(x, y, image(x, y, 0, 0), image(x, y, 0, 1), image(x, y, 0, 2));
+			size_t z = 0;
+			temp_image.SetRGB(x, y, image(x, y, z, 0), image(x, y, z, 1), image(x, y, z, 2));
 		}
 	}
 
-	return img;
+	return temp_image;
 }
 
 void GUIMyFrame1::Repaint()
