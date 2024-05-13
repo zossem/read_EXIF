@@ -11,33 +11,70 @@ MyFrame1( parent )
 
 void GUIMyFrame1::button_load_click( wxCommandEvent& event )
 {
-wxFileDialog openFileDialog(this, _("Open JPEG file"), "", "", "JPEG files (*.jpg)|*.jpg", wxFD_OPEN | wxFD_FILE_MUST_EXIST);
-if (openFileDialog.ShowModal() == wxID_CANCEL)
-return;
+	wxFileDialog openFileDialog(this, _("Open JPEG file"), "", "", "JPEG files (*.jpg)|*.jpg", wxFD_OPEN | wxFD_FILE_MUST_EXIST);
+	if (openFileDialog.ShowModal() == wxID_CANCEL)
+	return;
 
-wxImage image;
-{
-if (!image.LoadFile(openFileDialog.GetPath()))
-{
-wxMessageBox(_("Nie uda\u0142o si\u0119 za\u0142adowa\u0107 obrazka"));
-this->Destroy();
-return;
-}
-else
-{
-Img_Org = image.Copy();
-Img_Copy = Img_Org.Copy();
-}
-}
-m_isEroded = false;
-m_isBlur = false;
-m_isAnimation = false;
-m_checkBox_animation->SetValue(false);
-EnableControls();
+	wxImage image;
+	{
+		if (!image.LoadFile(openFileDialog.GetPath()))
+		{
+			wxMessageBox(_("Nie uda\u0142o si\u0119 za\u0142adowa\u0107 obrazka"));
+			this->Destroy();
+			return;
+		}
+		else
+		{
+			Img_Org = image.Copy();
+			Img_Copy = Img_Org.Copy();
+		}
+	}
+	m_isEroded = false;
+	m_isBlur = false;
+	m_isAnimation = false;
+	m_checkBox_animation->SetValue(false);
+	EnableControls();
 
-ReadExif(openFileDialog.GetPath());
-
+	ReadExif(openFileDialog.GetPath());
 }
+
+void GUIMyFrame1::ReadExif(const char* path)
+{
+	FREE_IMAGE_FORMAT typ_of_bitmap = FreeImage_GetFileType(path, 0);
+	FIBITMAP* loaded_bitmap = FreeImage_Load(typ_of_bitmap, path);
+
+	unsigned int width = FreeImage_GetWidth(loaded_bitmap);
+	unsigned int height = FreeImage_GetHeight(loaded_bitmap);
+
+	m_textCtrl1->Clear();
+	m_textCtrl1->AppendText(std::string("Rozmiar obrazka: ") + std::to_string(width) + "*" + std::to_string(height) + "\n");
+
+	m_textCtrl1->AppendText("EXIF Info:\n");
+	unsigned count;
+	if (count = FreeImage_GetMetadataCount(FIMD_EXIF_MAIN, loaded_bitmap))
+	{
+		FITAG* tag = NULL;
+		FIMETADATA* pice_of_mata_data = NULL;
+
+		pice_of_mata_data = FreeImage_FindFirstMetadata(FIMD_EXIF_MAIN, loaded_bitmap, &tag);
+		bool isNotEnd;
+		if (pice_of_mata_data)
+			isNotEnd = true;
+		else
+			isNotEnd = false;
+
+		while (isNotEnd)
+		{
+			const char* tagKey = FreeImage_GetTagKey(tag);
+			const char* tagValue = FreeImage_TagToString(FIMD_EXIF_MAIN, tag);
+			m_textCtrl1->AppendText(std::string(tagKey) + ": " + std::string(tagValue) + "\n");
+
+			isNotEnd = FreeImage_FindNextMetadata(pice_of_mata_data, &tag);
+		}
+		FreeImage_FindCloseMetadata(pice_of_mata_data);
+	}
+}
+
 
 void GUIMyFrame1::bitton_blur_click( wxCommandEvent& event )
 {
@@ -60,12 +97,21 @@ void GUIMyFrame1::Censore()
 	Img_Copy = CImgTowxImage(copy_cImg);
 }
 
+
 void GUIMyFrame1::button_erode_click( wxCommandEvent& event )
 {
 	m_isEroded = !m_isEroded;
 	
 	Repaint();
 }
+
+void GUIMyFrame1::Erode()
+{
+	cimg_library::CImg<unsigned char> temp_cImg = wxImageToCImg(Img_Copy);
+	temp_cImg.erode(4);
+	Img_Copy = CImgTowxImage(temp_cImg);
+}
+
 
 void GUIMyFrame1::checko_box_check( wxCommandEvent& event )
 {
@@ -141,28 +187,9 @@ void GUIMyFrame1::panel_OnSize( wxSizeEvent& event )
 	Repaint();
 }
 
-void GUIMyFrame1::Size()
-{
-	if (Img_Org.IsOk()) {
-		int borderSize = 5; // default border size
-		int newWidth = this->GetClientSize().GetWidth() - m_panel1->GetPosition().x - borderSize;
-		int newHeight = this->GetClientSize().GetHeight() - m_panel1->GetPosition().y - borderSize;
-		Img_Copy = Img_Org.Scale(newWidth, newHeight);
-	}
-}
-
 void GUIMyFrame1::panel_update( wxUpdateUIEvent& event )
 {
 Repaint(); 
-}
-
-
-
-void GUIMyFrame1::Erode()
-{
-	cimg_library::CImg<unsigned char> temp_cImg = wxImageToCImg(Img_Copy);
-	temp_cImg.erode(4);
-	Img_Copy = CImgTowxImage(temp_cImg);
 }
 
 
@@ -208,6 +235,18 @@ wxImage GUIMyFrame1::CImgTowxImage(cimg_library::CImg<unsigned char> image)
 	return temp_image;
 }
 
+
+void GUIMyFrame1::Size()
+{
+	if (Img_Org.IsOk()) 
+	{
+		int border = 5;
+		int to_set_width = this->GetClientSize().GetWidth() - m_panel1->GetPosition().x - border;
+		int to_set_height = this->GetClientSize().GetHeight() - m_panel1->GetPosition().y - border;
+		Img_Copy = Img_Org.Scale(to_set_width, to_set_height);
+	}
+}
+
 void GUIMyFrame1::Repaint()
 {
 	static unsigned frame_index = 0;
@@ -248,42 +287,3 @@ void GUIMyFrame1::Repaint()
 		dc.DrawBitmap(bitmap, 0, 0);
 	}
 }
-
-
-void GUIMyFrame1::ReadExif(const char* path)
-{
-	FREE_IMAGE_FORMAT typ_of_bitmap = FreeImage_GetFileType(path, 0);
-	FIBITMAP* loaded_bitmap = FreeImage_Load(typ_of_bitmap, path);
-
-	unsigned int width = FreeImage_GetWidth(loaded_bitmap);
-	unsigned int height = FreeImage_GetHeight(loaded_bitmap);
-
-	m_textCtrl1->Clear();
-	m_textCtrl1->AppendText(std::string("Rozmiar obrazka: ") + std::to_string(width) + "*" + std::to_string(height) + "\n");
-
-	m_textCtrl1->AppendText("EXIF Info:\n");
-	unsigned count;
-	if (count = FreeImage_GetMetadataCount(FIMD_EXIF_MAIN, loaded_bitmap)) 
-	{
-		FITAG* tag = NULL;
-		FIMETADATA* pice_of_mata_data = NULL;
-
-		pice_of_mata_data = FreeImage_FindFirstMetadata(FIMD_EXIF_MAIN, loaded_bitmap, &tag);
-		bool isNotEnd;
-		if (pice_of_mata_data)
-			isNotEnd = true;
-		else
-			isNotEnd = false;
-
-		while (isNotEnd)
-		{
-			const char* tagKey = FreeImage_GetTagKey(tag);
-			const char* tagValue = FreeImage_TagToString(FIMD_EXIF_MAIN, tag);
-			m_textCtrl1->AppendText(std::string(tagKey) + ": " + std::string(tagValue) + "\n");
-
-			isNotEnd=FreeImage_FindNextMetadata(pice_of_mata_data, &tag);
-		}
-		FreeImage_FindCloseMetadata(pice_of_mata_data);
-	}
-}
-
