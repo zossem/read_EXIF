@@ -154,17 +154,17 @@ void GUIMyFrame1::Animate()
 		m_progres_bar->SetValue(i);
 
 		cimg_library::CImg<float> gaussian_1(width, height, depth, 3);
-		gaussian_1.draw_gaussian(	(width / 2.f) + (width * 0.35f) * cos(i * M_PI / 60.f),
-									(height / 2.f) - (height * 0.3f) * sin(i * M_PI / 60.f),
-									sigma,	color);
+		gaussian_1.draw_gaussian(	(width / 2.f) ,
+									(height / 2.f) ,
+									sigma+ (height * 0.1f) * sin(i * M_PI * 2.0/60.0), color);
 
-		cimg_library::CImg<float> gaussian_2(width, height, depth, 3);
+		/*cimg_library::CImg<float> gaussian_2(width, height, depth, 3);
 		gaussian_2.draw_gaussian((width / 2.f) + (width * 0.35f) * cos((i + 60.f) * M_PI / 60.f),
 								(height / 2.f) - (height * 0.3f) * sin((i + 60.f) * M_PI / 60.f),
 								sigma,	color);
 
 		gaussian_1 += gaussian_2;
-
+		*/
 		cimg_library::CImg<float> temp_cImg = copy_cImg;
 		temp_cImg.mul(gaussian_1);
 
